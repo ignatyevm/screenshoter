@@ -108,9 +108,10 @@ public class ScreenshoterMain extends Application {
         try {
             Robot robot = new Robot();
             BufferedImage screenshot = robot.createScreenCapture(new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
-            BufferedImage scaledScreenshot = new BufferedImage(screenshot.getWidth(), screenshot.getHeight(), BufferedImage.TYPE_INT_ARGB);
-            AffineTransform transform = new AffineTransform();
-            transform.scale(0.8, 0.8);
+            int width = (screenshot.getWidth() * 8) / 10;
+            int height = (screenshot.getHeight() * 8) / 10;
+            BufferedImage scaledScreenshot = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            AffineTransform transform = AffineTransform.getScaleInstance(0.8, 0.8);
             AffineTransformOp scaleOp = new AffineTransformOp(transform, AffineTransformOp.TYPE_BICUBIC);
             scaledScreenshot = scaleOp.filter(screenshot, scaledScreenshot);
             new EditorWindow(mainWindow, SwingFXUtils.toFXImage(scaledScreenshot, null));
