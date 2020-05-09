@@ -60,8 +60,8 @@ public class ScreenshoterMain extends Application {
             vBox.getChildren().add(counter);
             startDelayTimer(delay, currentSecond -> counter.setText(Integer.toString(currentSecond)), () -> {
                 if (checkBox.isSelected()) {
+                    stage.hide();
                     Platform.runLater(() -> {
-                        stage.hide();
                         try {
                             Thread.sleep(200);
                         } catch (InterruptedException ex) {
@@ -69,6 +69,8 @@ public class ScreenshoterMain extends Application {
                         }
                         takeScreenshot();
                     });
+                } else {
+                    takeScreenshot();
                 }
             });
         });
