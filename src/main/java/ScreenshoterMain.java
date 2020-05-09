@@ -16,6 +16,8 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.util.function.Consumer;
 
@@ -77,9 +79,11 @@ public class ScreenshoterMain extends Application {
 
         BorderPane root = new BorderPane(vBox);
         Scene scene = new Scene(root, MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT);
+
+        stage.setScene(scene);
         stage.setTitle("Screenshoter");
         stage.setResizable(false);
-        stage.setScene(scene);
+        stage.centerOnScreen();
         stage.show();
     }
 
@@ -104,7 +108,12 @@ public class ScreenshoterMain extends Application {
         try {
             Robot robot = new Robot();
             BufferedImage screenshot = robot.createScreenCapture(new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
-            new EditorWindow(mainWindow, SwingFXUtils.toFXImage(screenshot, null));
+            BufferedImage scaledScreenshot = new BufferedImage(screenshot.getWidth(), screenshot.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            AffineTransform transform = new AffineTransform();
+            transform.scale(0.8, 0.8);
+            AffineTransformOp scaleOp = new AffineTransformOp(transform, AffineTransformOp.TYPE_BICUBIC);
+            scaledScreenshot = scaleOp.filter(screenshot, scaledScreenshot);
+            new EditorWindow(mainWindow, SwingFXUtils.toFXImage(scaledScreenshot, null));
         } catch (AWTException e) {
             e.printStackTrace();
         }
