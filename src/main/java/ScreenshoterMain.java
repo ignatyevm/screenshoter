@@ -2,6 +2,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -14,6 +15,8 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.function.Consumer;
 
 public class ScreenshoterMain extends Application {
@@ -21,7 +24,11 @@ public class ScreenshoterMain extends Application {
     public static final int MAIN_WINDOW_WIDTH = 300;
     public static final int MAIN_WINDOW_HEIGHT = 200;
 
+    private Stage mainWindow;
+
     public void start(Stage stage) {
+        mainWindow = stage;
+
         CheckBox checkBox = new CheckBox("Hide this window?");
         checkBox.setAllowIndeterminate(false);
 
@@ -92,7 +99,13 @@ public class ScreenshoterMain extends Application {
     }
 
     private void takeScreenshot() {
-
+        try {
+            Robot robot = new Robot();
+            BufferedImage screenshot = robot.createScreenCapture(new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
+            new EditorWindow(mainWindow, SwingFXUtils.toFXImage(screenshot, null));
+        } catch (AWTException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {
