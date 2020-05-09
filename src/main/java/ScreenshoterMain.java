@@ -61,12 +61,12 @@ public class ScreenshoterMain extends Application {
             startDelayTimer(delay, currentSecond -> counter.setText(Integer.toString(currentSecond)), () -> {
                 if (checkBox.isSelected()) {
                     Platform.runLater(() -> {
+                        stage.hide();
                         try {
                             Thread.sleep(200);
                         } catch (InterruptedException ex) {
                             ex.printStackTrace();
                         }
-                        stage.hide();
                         takeScreenshot();
                     });
                 }
