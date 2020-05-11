@@ -31,10 +31,25 @@ public class ScreenshoterMain extends Application {
     public void start(Stage stage) {
         mainWindow = stage;
 
+        mainWindow.setOnShown(event -> {
+            setupScene();
+        });
+
+        stage.setTitle("Screenshoter");
+        stage.setResizable(false);
+        stage.centerOnScreen();
+        stage.show();
+    }
+
+    private void setupScene() {
+        setupScene(0);
+    }
+
+    private void setupScene(int defaultDelay) {
         CheckBox checkBox = new CheckBox("Hide this window?");
         checkBox.setAllowIndeterminate(false);
 
-        Slider delaySlider = new Slider(0.0, 30.0, 0.0);
+        Slider delaySlider = new Slider(defaultDelay, 30.0, 0.0);
         delaySlider.setPrefWidth(MAIN_WINDOW_WIDTH - 20);
         delaySlider.setMaxWidth(MAIN_WINDOW_WIDTH - 20);
         delaySlider.setMinWidth(MAIN_WINDOW_WIDTH - 20);
@@ -48,43 +63,47 @@ public class ScreenshoterMain extends Application {
         Label label = new Label("Screenshot delay");
         label.setFont(new Font(14));
 
-        Button takeScreenShotButton = new Button("Take screenshot!");
+        Button takeScreenshotButton = new Button("Take screenshot!");
 
-        VBox vBox = new VBox(label, delaySlider, takeScreenShotButton, checkBox);
+        VBox vBox = new VBox(label, delaySlider, takeScreenshotButton, checkBox);
         vBox.setAlignment(Pos.CENTER);
         vBox.setSpacing(15);
 
-        takeScreenShotButton.setOnAction(event -> {
+        takeScreenshotButton.setOnAction(event -> {
             vBox.getChildren().clear();
             int delay = (int) delaySlider.getValue();
             Label counter = new Label(Integer.toString(delay));
             counter.setFont(new Font(30));
             vBox.getChildren().add(counter);
             startDelayTimer(delay, currentSecond -> counter.setText(Integer.toString(currentSecond)), () -> {
-                if (checkBox.isSelected()) {
-                    stage.hide();
-                    Platform.runLater(() -> {
-                        try {
-                            Thread.sleep(200);
-                        } catch (InterruptedException ex) {
-                            ex.printStackTrace();
-                        }
+                setupScene((int) delaySlider.getValue());
+                Platform.runLater(() -> {
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    if (checkBox.isSelected()) {
+                        mainWindow.hide();
+                        Platform.runLater(() -> {
+                            try {
+                                Thread.sleep(200);
+                            } catch (InterruptedException ex) {
+                                ex.printStackTrace();
+                            }
+                            takeScreenshot();
+                        });
+                    } else {
                         takeScreenshot();
-                    });
-                } else {
-                    takeScreenshot();
-                }
+                        mainWindow.hide();
+                    }
+                });
             });
         });
 
         BorderPane root = new BorderPane(vBox);
         Scene scene = new Scene(root, MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT);
-
-        stage.setScene(scene);
-        stage.setTitle("Screenshoter");
-        stage.setResizable(false);
-        stage.centerOnScreen();
-        stage.show();
+        mainWindow.setScene(scene);
     }
 
     private void startDelayTimer(int delay, Consumer<Integer> onUpdate, Runnable onFinish) {
