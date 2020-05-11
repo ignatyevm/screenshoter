@@ -188,7 +188,15 @@ public class EditorWindow extends Stage {
                 new SuccessWindow(file);
             }
         });
-        HBox buttonsBar = new HBox(saveButton);
+        Button openButton = new Button("Open");
+        openButton.setOnAction(event -> {
+            File file = showOpenFileDialog();
+            if (file != null) {
+                new EditorWindow(mainWindow, new Image(file.toURI().toString()));
+                hide();
+            }
+        });
+        HBox buttonsBar = new HBox(saveButton, openButton);
         buttonsBar.setAlignment(Pos.CENTER);
         buttonsBar.setSpacing(15);
         return buttonsBar;
@@ -274,6 +282,14 @@ public class EditorWindow extends Stage {
         fileChooser.setTitle("Save screenshot");
         fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
         return fileChooser.showSaveDialog(this);
+    }
+
+    File showOpenFileDialog() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Image File", "*.png", "*jpg"));
+        fileChooser.setTitle("Open image");
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+        return fileChooser.showOpenDialog(this);
     }
 
 }
