@@ -19,6 +19,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.function.Consumer;
 
 public class ScreenshoterMain extends Application {
@@ -31,6 +32,11 @@ public class ScreenshoterMain extends Application {
     public void start(Stage stage) {
         mainWindow = stage;
 
+        File mainDirectory = new File(System.getProperty("user.home") + "/screenshoter/");
+        if (!mainDirectory.exists()) {
+            mainDirectory.mkdir();
+        }
+
         mainWindow.setOnShown(event -> {
             setupScene();
         });
@@ -42,14 +48,10 @@ public class ScreenshoterMain extends Application {
     }
 
     private void setupScene() {
-        setupScene(0);
-    }
-
-    private void setupScene(int defaultDelay) {
         CheckBox checkBox = new CheckBox("Hide this window?");
         checkBox.setAllowIndeterminate(false);
 
-        Slider delaySlider = new Slider(defaultDelay, 30.0, 0.0);
+        Slider delaySlider = new Slider(0.0, 30.0, 0.0);
         delaySlider.setPrefWidth(MAIN_WINDOW_WIDTH - 20);
         delaySlider.setMaxWidth(MAIN_WINDOW_WIDTH - 20);
         delaySlider.setMinWidth(MAIN_WINDOW_WIDTH - 20);
@@ -106,7 +108,15 @@ public class ScreenshoterMain extends Application {
         }));
         delayTimer.setCycleCount(delay);
         delayTimer.setOnFinished(event -> {
-            onFinish.run();
+            onUpdate.accept(k[0]);
+            Platform.runLater(() -> {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                onFinish.run();
+            });
         });
         delayTimer.play();
     }
