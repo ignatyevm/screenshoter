@@ -24,12 +24,23 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class EditorWindow extends Stage {
+
+    public static int windowWidth;
+    public static int windowHeight;
+
+    static {
+        // window size = 80% part of screen
+        windowWidth = (Toolkit.getDefaultToolkit().getScreenSize().width * 8) / 10;
+        // +50px for tools bar
+        windowHeight = (Toolkit.getDefaultToolkit().getScreenSize().height * 8) / 10 + 50;
+    }
 
     private int screenshotWidth;
     private int screenshotHeight;
@@ -42,8 +53,12 @@ public class EditorWindow extends Stage {
     private GraphicsContext mainLayerContext;
     private GraphicsContext cropLayerContext;
 
+    private Stage mainWindow;
+
     public EditorWindow(Stage mainWindow, Image screenshot) {
         super();
+
+        this.mainWindow = mainWindow;
 
         setTitle("Screenshoter: Editor");
         setResizable(false);
@@ -51,6 +66,29 @@ public class EditorWindow extends Stage {
         setOnCloseRequest(event -> {
             mainWindow.show();
         });
+
+        HBox layersContainer = setupLayers(screenshot);
+        HBox toolsBar = setupToolsBar();
+        HBox buttonsBar = setupButtonsBar();
+
+        registerDrawingListeners();
+
+        BorderPane borderPane = new BorderPane();
+        borderPane.setLeft(toolsBar);
+        borderPane.setRight(buttonsBar);
+        borderPane.setPrefSize(windowWidth, 50);
+        borderPane.setMaxSize(windowWidth, 50);
+        borderPane.setMinSize(windowWidth, 50);
+        borderPane.setPadding(new Insets(0, 20, 0, 20));
+
+        VBox vBox = new VBox(borderPane, layersContainer);
+        Scene scene = new Scene(vBox);
+        registerHotKeys(scene);
+        setScene(scene);
+        show();
+    }
+
+    HBox setupLayers(Image screenshot) {
 
         screenshotWidth = (int) screenshot.getWidth();
         screenshotHeight = (int) screenshot.getHeight();
@@ -60,56 +98,10 @@ public class EditorWindow extends Stage {
         cropX2 = screenshotWidth;
         cropY2 = screenshotHeight;
 
-        Pane layers = setupLayers(screenshot);
-        HBox toolsBar = setupToolsBar();
-        HBox buttonsBar = setupButtonsBar();
-
-        registerDrawingListeners();
-
-        BorderPane borderPane = new BorderPane();
-        borderPane.setLeft(toolsBar);
-        borderPane.setRight(buttonsBar);
-        borderPane.setPrefSize(screenshotWidth, 50);
-        borderPane.setMaxSize(screenshotWidth, 50);
-        borderPane.setMinSize(screenshotWidth, 50);
-        borderPane.setPadding(new Insets(0, 20, 0, 20));
-
-        VBox vBox = new VBox(borderPane, layers);
-        Scene scene = new Scene(vBox);
-        registerHotKeys(scene);
-        setScene(scene);
-        show();
-    }
-
-    void registerHotKeys(Scene scene) {
-        scene.setOnKeyPressed(event -> {
-            File file = null;
-            if (event.getCode() == KeyCode.S && event.isShiftDown() && event.isControlDown()) {
-                file = openSaveFileDialog();
-            } else if (event.getCode() == KeyCode.S && event.isControlDown()) {
-                file = new File(String.format("%s/screenshoter/%s.png",
-                        System.getProperty("user.home"),
-                        new SimpleDateFormat("yyyy-MM-dd hh:mm").format(new Date())));
-            }
-            if (file != null) {
-                saveScreenshot(file);
-                new SuccessWindow(file);
-            }
-        });
-    }
-
-    File openSaveFileDialog() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("PNG File", "*.png"));
-        fileChooser.setTitle("Save screenshot");
-        fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
-        return fileChooser.showSaveDialog(this);
-    }
-
-    Pane setupLayers(Image screenshot) {
         mainLayer = new Canvas(screenshotWidth, screenshotHeight);
         mainLayerContext = mainLayer.getGraphicsContext2D();
         mainLayerContext.setLineCap(StrokeLineCap.ROUND);
+
         mainLayerContext.drawImage(screenshot, 0, 0, screenshotWidth, screenshotHeight);
 
         cropLayer = new Canvas(screenshotWidth, screenshotHeight);
@@ -117,7 +109,24 @@ public class EditorWindow extends Stage {
         cropLayerContext.setLineWidth(1);
         cropLayerContext.setStroke(Color.BLACK);
 
-        return new Pane(mainLayer, cropLayer);
+        Pane layers = new Pane(mainLayer, cropLayer);
+
+        int wp = 0;
+        int hp = 0;
+        if (screenshotWidth < windowWidth) {
+            wp = (windowWidth - screenshotWidth) / 2;
+        }
+        if (screenshotHeight < windowHeight - 50) {
+            hp = (windowHeight - screenshotHeight - 50) / 2;
+        }
+
+        HBox layersContainer = new HBox(layers);
+        layersContainer.setPrefSize(windowWidth, windowHeight - 50);
+        layersContainer.setMaxSize(windowWidth, windowHeight - 50);
+        layersContainer.setMinSize(windowWidth, windowHeight - 50);
+        layersContainer.setPadding(new Insets(hp, wp, hp, wp));
+
+        return layersContainer;
     }
 
     void registerDrawingListeners() {
@@ -153,12 +162,31 @@ public class EditorWindow extends Stage {
         });
     }
 
+    void registerHotKeys(Scene scene) {
+        scene.setOnKeyPressed(event -> {
+            File file = null;
+            if (event.getCode() == KeyCode.S && event.isShiftDown() && event.isControlDown()) {
+                file = showSaveFileDialog();
+            } else if (event.getCode() == KeyCode.S && event.isControlDown()) {
+                file = new File(String.format("%s/screenshoter/%s.png",
+                        System.getProperty("user.home"),
+                        new SimpleDateFormat("yyyy-MM-dd hh:mm").format(new Date())));
+            }
+            if (file != null) {
+                saveScreenshot(file);
+                new SuccessWindow(file);
+            }
+        });
+    }
+
     HBox setupButtonsBar() {
         Button saveButton = new Button("Save");
         saveButton.setOnAction(event -> {
-            File file = openSaveFileDialog();
-            saveScreenshot(file);
-            new SuccessWindow(file);
+            File file = showSaveFileDialog();
+            if (file != null) {
+                saveScreenshot(file);
+                new SuccessWindow(file);
+            }
         });
         HBox buttonsBar = new HBox(saveButton);
         buttonsBar.setAlignment(Pos.CENTER);
@@ -238,6 +266,14 @@ public class EditorWindow extends Stage {
         context.strokeRect(x1, y1, x2 - x1, y2 - y1);
         context.setStroke(currentStroke);
         context.setLineWidth(currentLineWidth);
+    }
+
+    File showSaveFileDialog() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("PNG File", "*.png", "*.jpg"));
+        fileChooser.setTitle("Save screenshot");
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+        return fileChooser.showSaveDialog(this);
     }
 
 }

@@ -125,9 +125,7 @@ public class ScreenshoterMain extends Application {
         try {
             Robot robot = new Robot();
             BufferedImage screenshot = robot.createScreenCapture(new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
-            int width = (screenshot.getWidth() * 8) / 10;
-            int height = (screenshot.getHeight() * 8) / 10;
-            BufferedImage scaledScreenshot = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            BufferedImage scaledScreenshot = new BufferedImage(EditorWindow.windowWidth, EditorWindow.windowHeight - 50, BufferedImage.TYPE_INT_ARGB);
             AffineTransform transform = AffineTransform.getScaleInstance(0.8, 0.8);
             AffineTransformOp scaleOp = new AffineTransformOp(transform, AffineTransformOp.TYPE_BICUBIC);
             scaledScreenshot = scaleOp.filter(screenshot, scaledScreenshot);
