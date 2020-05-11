@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.prefs.Preferences;
 
 public class EditorWindow extends Stage {
 
@@ -167,6 +168,7 @@ public class EditorWindow extends Stage {
             File file = null;
             if (event.getCode() == KeyCode.S && event.isShiftDown() && event.isControlDown()) {
                 file = showSaveFileDialog();
+                Preferences.userRoot().put("last_dir", file.getParentFile().getAbsolutePath());
             } else if (event.getCode() == KeyCode.S && event.isControlDown()) {
                 file = new File(String.format("%s/screenshoter/%s.png",
                         System.getProperty("user.home"),
@@ -185,6 +187,7 @@ public class EditorWindow extends Stage {
             File file = showSaveFileDialog();
             if (file != null) {
                 saveScreenshot(file);
+                Preferences.userRoot().put("last_dir", file.getParentFile().getAbsolutePath());
                 new SuccessWindow(file);
             }
         });
@@ -251,7 +254,6 @@ public class EditorWindow extends Stage {
         SnapshotParameters snapshotParameters = new SnapshotParameters();
         snapshotParameters.setViewport(new Rectangle2D(cropX, cropY, cropWidth, cropHeight));
         mainLayer.snapshot(snapshotParameters, writableImage);
-
         try {
             ImageIO.write(SwingFXUtils.fromFXImage(writableImage, null), "png", file);
         } catch (IOException e) {
@@ -280,7 +282,7 @@ public class EditorWindow extends Stage {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("PNG File", "*.png", "*.jpg"));
         fileChooser.setTitle("Save screenshot");
-        fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+        fileChooser.setInitialDirectory(new File(Preferences.userRoot().get("last_dir", System.getProperty("user.home"))));
         return fileChooser.showSaveDialog(this);
     }
 
@@ -288,7 +290,7 @@ public class EditorWindow extends Stage {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Image File", "*.png", "*jpg"));
         fileChooser.setTitle("Open image");
-        fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+        fileChooser.setInitialDirectory(new File(Preferences.userRoot().get("last_dir", System.getProperty("user.home"))));
         return fileChooser.showOpenDialog(this);
     }
 
