@@ -33,6 +33,12 @@ public class EditorWindow extends Stage {
     private boolean isCropping = false;
     private int cropX1, cropY1, cropX2, cropY2;
 
+    private Canvas mainLayer;
+    private Canvas cropLayer;
+
+    private GraphicsContext mainLayerContext;
+    private GraphicsContext cropLayerContext;
+
     public EditorWindow(Stage mainWindow, Image screenshot) {
         super();
 
@@ -51,50 +57,39 @@ public class EditorWindow extends Stage {
         cropX2 = screenshotWidth;
         cropY2 = screenshotHeight;
 
-        Canvas mainLayer = new Canvas(screenshotWidth, screenshotHeight);
-        GraphicsContext mainLayerContext = mainLayer.getGraphicsContext2D();
+        mainLayer = new Canvas(screenshotWidth, screenshotHeight);
+        mainLayerContext = mainLayer.getGraphicsContext2D();
         mainLayerContext.setLineCap(StrokeLineCap.ROUND);
         mainLayerContext.drawImage(screenshot, 0, 0, screenshotWidth, screenshotHeight);
 
-        Canvas cropLayer = new Canvas(screenshotWidth, screenshotHeight);
-        GraphicsContext cropLayerContext = cropLayer.getGraphicsContext2D();
+        cropLayer = new Canvas(screenshotWidth, screenshotHeight);
+        cropLayerContext = cropLayer.getGraphicsContext2D();
         cropLayerContext.setLineWidth(1);
         cropLayerContext.setStroke(Color.BLACK);
 
         Pane layers = new Pane(mainLayer, cropLayer);
 
-        ColorPicker colorPicker = new ColorPicker(Color.RED);
-        colorPicker.setOnAction(event -> {
-            mainLayerContext.setStroke(colorPicker.getValue());
-        });
+        HBox toolsBar = setupToolsBar();
 
-        Slider lineWidthSlider = new Slider(1.0, 36.0, 5.0);
-        lineWidthSlider.setPrefWidth(300);
-        lineWidthSlider.setMaxWidth(300);
-        lineWidthSlider.setMinWidth(300);
-        lineWidthSlider.setMinorTickCount(4);
-        lineWidthSlider.setMajorTickUnit(5.0);
-        lineWidthSlider.setBlockIncrement(1.0);
-        lineWidthSlider.setShowTickMarks(true);
-        lineWidthSlider.setShowTickLabels(true);
-        lineWidthSlider.setSnapToTicks(true);
-        lineWidthSlider.valueProperty().addListener((obs) -> {
-            mainLayerContext.setLineWidth(lineWidthSlider.getValue());
-        });
+        HBox buttonsBar = setupButtonsBar();
 
-        mainLayerContext.setStroke(colorPicker.getValue());
-        mainLayerContext.setLineWidth(lineWidthSlider.getValue());
+        BorderPane borderPane = new BorderPane();
+        borderPane.setLeft(toolsBar);
+        borderPane.setRight(buttonsBar);
+        borderPane.setPrefSize(screenshotWidth, 50);
+        borderPane.setMaxSize(screenshotWidth, 50);
+        borderPane.setMinSize(screenshotWidth, 50);
 
-        Button cropButton = new Button();
-        ImageView cropButtonIcon = new ImageView(getClass().getClassLoader().getResource("crop.png").toString());
-        cropButtonIcon.setFitWidth(20);
-        cropButtonIcon.setFitHeight(20);
-        cropButton.setGraphic(cropButtonIcon);
-        cropButton.setOnAction(event -> {
-            isCropping = true;
-            cropLayer.toFront();
-        });
+        borderPane.setPadding(new Insets(0, 20, 0, 20));
 
+        VBox vBox = new VBox(borderPane, layers);
+        Scene scene = new Scene(vBox);
+
+        setScene(scene);
+        show();
+    }
+
+    void registerDrawingListeners() {
         cropLayer.setOnMousePressed(event -> {
             int x = (int) event.getX();
             int y = (int) event.getY();
@@ -125,11 +120,9 @@ public class EditorWindow extends Stage {
         cropLayer.setOnMouseReleased(event -> {
             isCropping = false;
         });
+    }
 
-        HBox toolsBar = new HBox(cropButton, colorPicker, lineWidthSlider);
-        toolsBar.setAlignment(Pos.CENTER);
-        toolsBar.setSpacing(15);
-
+    HBox setupButtonsBar() {
         Button saveButton = new Button("Save");
         saveButton.setOnAction(event -> {
             validateCrop();
@@ -155,25 +148,48 @@ public class EditorWindow extends Stage {
                 e.printStackTrace();
             }
         });
-
         HBox buttonsBar = new HBox(saveButton);
         buttonsBar.setAlignment(Pos.CENTER);
         buttonsBar.setSpacing(15);
+        return buttonsBar;
+    }
 
-        BorderPane borderPane = new BorderPane();
-        borderPane.setLeft(toolsBar);
-        borderPane.setRight(buttonsBar);
-        borderPane.setPrefSize(screenshotWidth, 50);
-        borderPane.setMaxSize(screenshotWidth, 50);
-        borderPane.setMinSize(screenshotWidth, 50);
+    HBox setupToolsBar() {
+        Button cropButton = new Button();
+        ImageView cropButtonIcon = new ImageView(getClass().getClassLoader().getResource("crop.png").toString());
+        cropButtonIcon.setFitWidth(20);
+        cropButtonIcon.setFitHeight(20);
+        cropButton.setGraphic(cropButtonIcon);
+        cropButton.setOnAction(event -> {
+            isCropping = true;
+        });
 
-        borderPane.setPadding(new Insets(0, 20, 0, 20));
+        ColorPicker colorPicker = new ColorPicker(Color.RED);
+        colorPicker.setOnAction(event -> {
+            mainLayerContext.setStroke(colorPicker.getValue());
+        });
 
-        VBox vBox = new VBox(borderPane, layers);
-        Scene scene = new Scene(vBox);
+        Slider lineWidthSlider = new Slider(1.0, 36.0, 5.0);
+        lineWidthSlider.setPrefWidth(300);
+        lineWidthSlider.setMaxWidth(300);
+        lineWidthSlider.setMinWidth(300);
+        lineWidthSlider.setMinorTickCount(4);
+        lineWidthSlider.setMajorTickUnit(5.0);
+        lineWidthSlider.setBlockIncrement(1.0);
+        lineWidthSlider.setShowTickMarks(true);
+        lineWidthSlider.setShowTickLabels(true);
+        lineWidthSlider.setSnapToTicks(true);
+        lineWidthSlider.valueProperty().addListener((obs) -> {
+            mainLayerContext.setLineWidth(lineWidthSlider.getValue());
+        });
 
-        setScene(scene);
-        show();
+        mainLayerContext.setStroke(colorPicker.getValue());
+        mainLayerContext.setLineWidth(lineWidthSlider.getValue());
+
+        HBox toolsBar = new HBox(cropButton, colorPicker, lineWidthSlider);
+        toolsBar.setAlignment(Pos.CENTER);
+        toolsBar.setSpacing(15);
+        return toolsBar;
     }
 
     void validateCrop() {
