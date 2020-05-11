@@ -12,6 +12,7 @@ import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -25,6 +26,8 @@ import javafx.stage.Stage;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class EditorWindow extends Stage {
 
@@ -85,9 +88,34 @@ public class EditorWindow extends Stage {
 
         VBox vBox = new VBox(borderPane, layers);
         Scene scene = new Scene(vBox);
-
+        registerHotKeys(scene);
         setScene(scene);
         show();
+    }
+
+    void registerHotKeys(Scene scene) {
+        scene.setOnKeyPressed(event -> {
+            File file = null;
+            if (event.getCode() == KeyCode.S && event.isShiftDown() && event.isControlDown()) {
+                file = openSaveFileDialog();
+            } else if (event.getCode() == KeyCode.S && event.isControlDown()) {
+                file = new File(String.format("%s/screenshoter/%s.png",
+                        System.getProperty("user.home"),
+                        new SimpleDateFormat("yyyy-MM-dd hh:mm").format(new Date())));
+            }
+            if (file != null) {
+                saveScreenshot(file);
+                new SuccessWindow(file);
+            }
+        });
+    }
+
+    File openSaveFileDialog() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("PNG File", "*.png"));
+        fileChooser.setTitle("Save screenshot");
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+        return fileChooser.showSaveDialog(this);
     }
 
     void registerDrawingListeners() {
@@ -126,13 +154,7 @@ public class EditorWindow extends Stage {
     HBox setupButtonsBar() {
         Button saveButton = new Button("Save");
         saveButton.setOnAction(event -> {
-
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("PNG File", "*.png"));
-            fileChooser.setTitle("Save screenshot");
-            fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
-            File file = fileChooser.showSaveDialog(this);
-
+            File file = openSaveFileDialog();
             saveScreenshot(file);
         });
         HBox buttonsBar = new HBox(saveButton);
