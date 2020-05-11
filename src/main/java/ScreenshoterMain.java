@@ -70,34 +70,22 @@ public class ScreenshoterMain extends Application {
         vBox.setSpacing(15);
 
         takeScreenshotButton.setOnAction(event -> {
-            vBox.getChildren().clear();
             int delay = (int) delaySlider.getValue();
-            Label counter = new Label(Integer.toString(delay));
-            counter.setFont(new Font(30));
-            vBox.getChildren().add(counter);
-            startDelayTimer(delay, currentSecond -> counter.setText(Integer.toString(currentSecond)), () -> {
-                setupScene((int) delaySlider.getValue());
-                Platform.runLater(() -> {
-                    try {
-                        Thread.sleep(50);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    if (checkBox.isSelected()) {
-                        mainWindow.hide();
-                        Platform.runLater(() -> {
-                            try {
-                                Thread.sleep(200);
-                            } catch (InterruptedException ex) {
-                                ex.printStackTrace();
-                            }
-                            takeScreenshot();
-                        });
-                    } else {
+            startDelayTimer(delay, delaySlider::setValue, () -> {
+                if (checkBox.isSelected()) {
+                    mainWindow.hide();
+                    Platform.runLater(() -> {
+                        try {
+                            Thread.sleep(200);
+                        } catch (InterruptedException ex) {
+                            ex.printStackTrace();
+                        }
                         takeScreenshot();
-                        mainWindow.hide();
-                    }
-                });
+                    });
+                } else {
+                    takeScreenshot();
+                    mainWindow.hide();
+                }
             });
         });
 
