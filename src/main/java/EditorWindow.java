@@ -60,22 +60,11 @@ public class EditorWindow extends Stage {
         cropX2 = screenshotWidth;
         cropY2 = screenshotHeight;
 
-        mainLayer = new Canvas(screenshotWidth, screenshotHeight);
-        mainLayerContext = mainLayer.getGraphicsContext2D();
-        mainLayerContext.setLineCap(StrokeLineCap.ROUND);
-        mainLayerContext.drawImage(screenshot, 0, 0, screenshotWidth, screenshotHeight);
-
-        cropLayer = new Canvas(screenshotWidth, screenshotHeight);
-        cropLayerContext = cropLayer.getGraphicsContext2D();
-        cropLayerContext.setLineWidth(1);
-        cropLayerContext.setStroke(Color.BLACK);
-
-        Pane layers = new Pane(mainLayer, cropLayer);
-        registerDrawingListeners();
-
+        Pane layers = setupLayers(screenshot);
         HBox toolsBar = setupToolsBar();
-
         HBox buttonsBar = setupButtonsBar();
+
+        registerDrawingListeners();
 
         BorderPane borderPane = new BorderPane();
         borderPane.setLeft(toolsBar);
@@ -83,7 +72,6 @@ public class EditorWindow extends Stage {
         borderPane.setPrefSize(screenshotWidth, 50);
         borderPane.setMaxSize(screenshotWidth, 50);
         borderPane.setMinSize(screenshotWidth, 50);
-
         borderPane.setPadding(new Insets(0, 20, 0, 20));
 
         VBox vBox = new VBox(borderPane, layers);
@@ -116,6 +104,20 @@ public class EditorWindow extends Stage {
         fileChooser.setTitle("Save screenshot");
         fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
         return fileChooser.showSaveDialog(this);
+    }
+
+    Pane setupLayers(Image screenshot) {
+        mainLayer = new Canvas(screenshotWidth, screenshotHeight);
+        mainLayerContext = mainLayer.getGraphicsContext2D();
+        mainLayerContext.setLineCap(StrokeLineCap.ROUND);
+        mainLayerContext.drawImage(screenshot, 0, 0, screenshotWidth, screenshotHeight);
+
+        cropLayer = new Canvas(screenshotWidth, screenshotHeight);
+        cropLayerContext = cropLayer.getGraphicsContext2D();
+        cropLayerContext.setLineWidth(1);
+        cropLayerContext.setStroke(Color.BLACK);
+
+        return new Pane(mainLayer, cropLayer);
     }
 
     void registerDrawingListeners() {
@@ -156,6 +158,7 @@ public class EditorWindow extends Stage {
         saveButton.setOnAction(event -> {
             File file = openSaveFileDialog();
             saveScreenshot(file);
+            new SuccessWindow(file);
         });
         HBox buttonsBar = new HBox(saveButton);
         buttonsBar.setAlignment(Pos.CENTER);
