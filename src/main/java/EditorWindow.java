@@ -68,6 +68,7 @@ public class EditorWindow extends Stage {
         cropLayerContext.setStroke(Color.BLACK);
 
         Pane layers = new Pane(mainLayer, cropLayer);
+        registerDrawingListeners();
 
         HBox toolsBar = setupToolsBar();
 
@@ -125,16 +126,6 @@ public class EditorWindow extends Stage {
     HBox setupButtonsBar() {
         Button saveButton = new Button("Save");
         saveButton.setOnAction(event -> {
-            validateCrop();
-            int cropX = cropX1;
-            int cropY = cropY1;
-            int cropWidth = cropX2 - cropX1;
-            int cropHeight = cropY2 - cropY1;
-
-            WritableImage writableImage = new WritableImage(cropWidth, cropHeight);
-            SnapshotParameters snapshotParameters = new SnapshotParameters();
-            snapshotParameters.setViewport(new Rectangle2D(cropX, cropY, cropWidth, cropHeight));
-            mainLayer.snapshot(snapshotParameters, writableImage);
 
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("PNG File", "*.png"));
@@ -142,11 +133,7 @@ public class EditorWindow extends Stage {
             fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
             File file = fileChooser.showSaveDialog(this);
 
-            try {
-                ImageIO.write(SwingFXUtils.fromFXImage(writableImage, null), "png", file);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            saveScreenshot(file);
         });
         HBox buttonsBar = new HBox(saveButton);
         buttonsBar.setAlignment(Pos.CENTER);
@@ -190,6 +177,25 @@ public class EditorWindow extends Stage {
         toolsBar.setAlignment(Pos.CENTER);
         toolsBar.setSpacing(15);
         return toolsBar;
+    }
+
+    void saveScreenshot(File file) {
+        validateCrop();
+        int cropX = cropX1;
+        int cropY = cropY1;
+        int cropWidth = cropX2 - cropX1;
+        int cropHeight = cropY2 - cropY1;
+
+        WritableImage writableImage = new WritableImage(cropWidth, cropHeight);
+        SnapshotParameters snapshotParameters = new SnapshotParameters();
+        snapshotParameters.setViewport(new Rectangle2D(cropX, cropY, cropWidth, cropHeight));
+        mainLayer.snapshot(snapshotParameters, writableImage);
+
+        try {
+            ImageIO.write(SwingFXUtils.fromFXImage(writableImage, null), "png", file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     void validateCrop() {
